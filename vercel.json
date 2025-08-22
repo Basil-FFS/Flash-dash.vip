@@ -1,6 +1,11 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "chmod +x build.sh && ./build.sh",
   "outputDirectory": "dist",
   "framework": "vite",
-  "installCommand": "npm install"
+  "installCommand": "npm ci",
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
 }
