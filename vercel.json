@@ -1,23 +1,10 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
   "routes": [
     {
       "src": "/[^.]+",
       "dest": "/",
       "status": 200
     }
-  ],
-  "env": {
-    "VITE_API_BASE": "https://api.flashdash.vip",
-    "VITE_APP_URL": "https://flashdash.vip"
-  }
+  ]
 }
