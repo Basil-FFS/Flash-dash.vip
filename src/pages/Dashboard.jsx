@@ -64,7 +64,7 @@ export default function Dashboard() {
             {greeting}, {agentName}! 👋
           </h1>
           <p className="text-xl text-teal-100 mb-6 max-w-2xl">
-            Welcome to your FLASH DASH CRM dashboard. Here's what's happening with your leads today.
+            Welcome to FLASH DASH.
           </p>
           <div className="flex flex-wrap gap-4">
             <Link to="/flash-form" className="btn-primary">

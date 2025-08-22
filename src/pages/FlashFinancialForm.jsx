@@ -216,7 +216,7 @@ export default function FlashFinancialForm() {
           <div className="max-w-4xl mx-auto space-y-6">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
               <p className="text-lg leading-relaxed">
-                <strong className="text-yellow-300">Agent:</strong> "Thank you for calling FLASH DASH, my name is{' '}
+                <strong className="text-yellow-300"></strong> "Thank you for calling FLASH DASH, my name is{' '}
                 <span className="text-yellow-300 font-bold text-xl">{agentName}</span>{' '}
                 and we are on a recorded line. To whom do I have the pleasure of speaking with?"
               </p>
@@ -224,9 +224,9 @@ export default function FlashFinancialForm() {
             
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
               <p className="text-lg leading-relaxed">
-                <strong className="text-yellow-300">Agent:</strong> "Hello{' '}
+                <strong className="text-yellow-300"></strong> "Hello{' '}
                 <span className="text-yellow-300 font-bold text-xl">{firstName || '[Name]'}</span>{' '}
-                , how is your day going?"
+                , how much debt are you calling about today?"
               </p>
             </div>
           </div>
@@ -274,7 +274,7 @@ export default function FlashFinancialForm() {
             {/* Name Fields - Side by Side */}
             <div className="space-y-4">
               <div className="bg-blue-50 p-4 rounded-xl border-l-4 border-teal-500">
-                <p className="text-gray-700 font-medium">
+                <p className="text-gray-700 font-medium"> 
                   <strong>2.</strong> Go ahead with the spelling of your first and last name.
                 </p>
               </div>
@@ -491,7 +491,7 @@ export default function FlashFinancialForm() {
                     className="w-5 h-5 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
                   />
                   <span className="text-gray-700 font-medium">
-                    Authorization
+                    I authorize a soft credit inquiry (this will not affect your credit score)
                   </span>
                 </div>
               </div>

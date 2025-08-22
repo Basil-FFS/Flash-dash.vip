@@ -33,7 +33,7 @@ function Layout({ children }) {
               )}
               <div className="hidden md:block">
                 <h1 className="text-xl font-bold text-white">FLASH DASH</h1>
-                <p className="text-primary-200 text-sm">Premium CRM Platform</p>
+                <p className="text-primary-200 text-sm">Flash Financial Services</p>
               </div>
             </div>
 

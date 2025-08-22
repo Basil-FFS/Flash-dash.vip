@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: import.meta.env.VITE_API_BASE });
+// Use production API URL for production, fallback to localhost for development
+const baseURL = import.meta.env.PROD 
+  ? 'https://api.flashdash.vip'  // Production backend URL
+  : 'http://localhost:8080';     // Development backend URL
+
+const api = axios.create({ baseURL });
 
 api.interceptors.request.use((cfg) => {
   const t = localStorage.getItem('token');
