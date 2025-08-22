@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 font-inter antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-poppins font-semibold;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2;
+  }
+  
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-6 rounded-xl border border-gray-200 transition-all duration-200 transform hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2;
+  }
+  
+  .card {
+    @apply bg-white rounded-2xl shadow-md border border-gray-100 p-6 transition-all duration-200 hover:shadow-lg;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 bg-white;
+  }
+  
+  .gradient-bg {
+    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-teal-900;
+  }
+  
+  .glass-effect {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent;
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded-full;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-teal-400 rounded-full hover:bg-teal-500;
+}
+
+/* Smooth transitions */
+* {
+  transition: all 0.2s ease-in-out;
+}
