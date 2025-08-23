@@ -188,7 +188,7 @@ export default function FlashFinancialForm() {
       {/* Hero Header */}
       <div className="gradient-bg rounded-3xl p-8 text-white shadow-2xl text-center">
         <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          FLASH DASH Lead Intake
+          FlashDash Lead Intake
         </h1>
         <p className="text-xl text-teal-100 max-w-2xl mx-auto">
           Please fill out the form below to submit a lead to Forth.
@@ -216,7 +216,7 @@ export default function FlashFinancialForm() {
           <div className="max-w-4xl mx-auto space-y-6">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
               <p className="text-lg leading-relaxed">
-                <strong className="text-yellow-300"></strong> "Thank you for calling FLASH DASH, my name is{' '}
+                <strong className="text-yellow-300"></strong> "Thank you for calling FlashDash, my name is{' '}
                 <span className="text-yellow-300 font-bold text-xl">{agentName}</span>{' '}
                 and we are on a recorded line. To whom do I have the pleasure of speaking with?"
               </p>

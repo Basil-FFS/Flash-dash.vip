@@ -169,7 +169,7 @@ export default function AdminPanel() {
             Admin Panel 🛠️
           </h1>
           <p className="text-xl text-teal-100 mb-6">
-            Manage your team, monitor performance, and export data from your FLASH DASH CRM.
+            Manage your team, monitor performance, and export data from your FlashDash CRM.
           </p>
           <div className="flex flex-wrap gap-4">
             <button 

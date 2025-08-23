@@ -29,10 +29,10 @@ function Layout({ children }) {
             {/* Logo and Brand */}
             <div className="flex items-center space-x-4">
               {logo && (
-                <img src={logo} alt="FLASH DASH" className="h-10 w-auto" />
+                <img src={logo} alt="FlashDash" className="h-10 w-auto" />
               )}
               <div className="hidden md:block">
-                <h1 className="text-xl font-bold text-white">FLASH DASH</h1>
+                <h1 className="text-xl font-bold text-white">FlashDash</h1>
                 <p className="text-primary-200 text-sm">Flash Financial Solutions</p>
               </div>
             </div>

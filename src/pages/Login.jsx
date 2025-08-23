@@ -43,10 +43,10 @@ export default function Login() {
         <div className="text-center mb-8">
           {logo && (
             <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl mb-6 border border-white/20">
-              <img src={logo} alt="FLASH DASH" className="h-12 w-auto" />
+              <img src={logo} alt="FlashDash" className="h-12 w-auto" />
             </div>
           )}
-          <h1 className="text-4xl font-bold text-white mb-2">FLASH DASH</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">FlashDash</h1>
           <p className="text-primary-200 text-lg">Emplyee Log In Only</p>
         </div>
 
@@ -57,7 +57,7 @@ export default function Login() {
               <span className="text-2xl">🔐</span>
             </div>
             <h2 className="text-2xl font-bold text-white">Employee Login</h2>
-            <p className="text-primary-100 mt-2">Access Flash Dash</p>
+            <p className="text-primary-100 mt-2">Access FlashDash</p>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-6">
@@ -120,7 +120,7 @@ export default function Login() {
           {/* Footer */}
           <div className="mt-8 text-center">
             <p className="text-primary-200 text-sm">
-              Secure access to your FLASH DASH
+              Secure access to your FlashDash
             </p>
           </div>
         </div>
