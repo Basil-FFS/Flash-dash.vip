@@ -1,4 +1,5 @@
 {
+  "buildCommand": "npx --yes vite build",
   "rewrites": [
     {
       "source": "/(.*)",
