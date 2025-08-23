@@ -5,10 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:prod": "vite build --mode production",
-    "build:vercel": "vite build",
-    "vercel-build": "vite build",
+    "build": "npx vite build",
+    "build:prod": "npx vite build --mode production",
     "preview": "vite preview",
     "start": "vite",
     "deploy": "npm run build:prod && echo 'Build complete. Upload dist/ folder to your web server.'"
@@ -27,9 +25,7 @@
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
+    "terser": "^5.43.1",
     "vite": "^5.4.2"
-  },
-  "engines": {
-    "node": ">=18.0.0"
   }
 }

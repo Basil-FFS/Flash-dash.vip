@@ -1,71 +1,102 @@
-# Deployment Guide for flashdash.vip
+# FLASH DASH Frontend Deployment Guide
 
 ## Prerequisites
 - Domain: `flashdash.vip` (already configured)
-- Web hosting service (e.g., Netlify, Vercel, or traditional web hosting)
+- Web hosting service (cPanel, VPS, or cloud hosting)
 - SSL certificate for HTTPS
 
-## Step 1: Build the Production Version
+## Step 1: Build Production Version
 
+### Option A: Using the batch script (Windows)
 ```bash
-cd flash-internal-frontend
+# Double-click build-production.bat
+# OR run in command prompt:
+build-production.bat
+```
+
+### Option B: Manual build
+```bash
 npm install
 npm run build:prod
 ```
 
-This will create a `dist/` folder with your production-ready files.
+## Step 2: Upload to Web Server
 
-## Step 2: Deploy to Your Web Host
+### For cPanel Hosting:
+1. Log into your cPanel account
+2. Navigate to File Manager
+3. Go to `public_html` folder (or your domain's root directory)
+4. Upload all contents from the `dist/` folder
+5. Ensure `index.html` is in the root directory
 
-### Option A: Netlify (Recommended for React apps)
-1. Connect your GitHub repository to Netlify
-2. Set build command: `npm run build:prod`
-3. Set publish directory: `dist`
-4. Set environment variables:
-   - `VITE_API_BASE=https://api.flashdash.vip`
-   - `VITE_APP_URL=https://flashdash.vip`
+### For VPS/Cloud Hosting:
+1. Upload the `dist/` folder contents to your web server's document root
+2. Configure your web server (Apache/Nginx) to serve the files
 
-### Option B: Vercel
-1. Connect your GitHub repository to Vercel
-2. Set build command: `npm run build:prod`
-3. Set output directory: `dist`
-4. Set environment variables as above
+## Step 3: Configure Web Server
 
-### Option C: Traditional Web Hosting
-1. Upload the contents of the `dist/` folder to your web server's public directory
-2. Ensure your server is configured to serve `index.html` for all routes (SPA routing)
+### Apache (.htaccess file in root directory):
+```apache
+RewriteEngine On
+RewriteBase /
 
-## Step 3: Configure Domain
+# Handle React Router - redirect all requests to index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /index.html [QSA,L]
 
-1. Point your domain `flashdash.vip` to your hosting provider
-2. Set up SSL certificate (Let's Encrypt is free)
-3. Configure redirects:
-   - HTTP → HTTPS
-   - All routes → `index.html` (for React Router)
+# Security headers
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+```
 
-## Step 4: Backend Configuration
+### Nginx configuration:
+```nginx
+location / {
+    try_files $uri $uri/ /index.html;
+}
 
-Your backend should be hosted at `api.flashdash.vip` with:
-- CORS configured to allow `https://flashdash.vip`
-- SSL certificate
-- Proper environment variables
+# Security headers
+add_header X-Content-Type-Options nosniff;
+add_header X-Frame-Options DENY;
+add_header X-XSS-Protection "1; mode=block";
+```
 
-## Step 5: Test
+## Step 4: SSL/HTTPS Configuration
+
+1. Install SSL certificate (Let's Encrypt is free)
+2. Redirect all HTTP traffic to HTTPS
+3. Update your backend API URL to use HTTPS
+
+## Step 5: Backend Configuration
+
+Ensure your backend is accessible at:
+- `https://api.flashdash.vip` (recommended)
+- OR update the frontend API URL in `src/api.js`
+
+## Step 6: Test Your Deployment
 
 1. Visit `https://flashdash.vip`
-2. Test all functionality
-3. Verify API calls work to `https://api.flashdash.vip`
-
-## Environment Variables for Production
-
-```bash
-VITE_APP_TITLE=FLASH DASH Premium CRM Platform
-VITE_API_BASE=https://api.flashdash.vip
-VITE_APP_URL=https://flashdash.vip
-```
+2. Test all functionality (login, forms, etc.)
+3. Check browser console for any errors
+4. Verify API calls are working
 
 ## Troubleshooting
 
-- **404 errors on refresh**: Configure your server to serve `index.html` for all routes
-- **CORS errors**: Ensure backend allows `https://flashdash.vip`
-- **Mixed content errors**: Ensure all resources use HTTPS
+### Common Issues:
+- **404 errors**: Ensure `.htaccess` (Apache) or Nginx config is correct
+- **API errors**: Check backend URL and CORS configuration
+- **Build errors**: Run `npm install` before building
+
+### Support:
+- Check browser console for error messages
+- Verify file permissions on web server
+- Ensure all files were uploaded correctly
+
+## Maintenance
+
+- Keep dependencies updated: `npm update`
+- Rebuild and redeploy after code changes
+- Monitor web server logs for errors
+- Regular backups of your deployment

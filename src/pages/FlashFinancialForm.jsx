@@ -442,10 +442,7 @@ export default function FlashFinancialForm() {
                 >
                   <option value="">Select Employment Status</option>
                   <option value="Employed">Employed</option>
-                  <option value="Self-Employed">Self-Employed</option>
                   <option value="Fixed Income">Fixed Income</option>
-                  <option value="Unemployed">Unemployed</option>
-                  <option value="Retired">Retired</option>
                 </select>
                 {errors.employment_status && (
                   <p className="text-red-600 text-sm">⚠️ {errors.employment_status.message}</p>
@@ -491,7 +488,7 @@ export default function FlashFinancialForm() {
                     className="w-5 h-5 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
                   />
                   <span className="text-gray-700 font-medium">
-                    I authorize a soft credit inquiry (this will not affect your credit score)
+                    Authorization
                   </span>
                 </div>
               </div>

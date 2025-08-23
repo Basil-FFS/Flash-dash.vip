@@ -15,6 +15,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    minify: 'esbuild', // Changed from 'terser' to 'esbuild' for better reliability
     rollupOptions: {
       output: {
         manualChunks: {
@@ -25,7 +26,7 @@ export default defineConfig({
     }
   },
   preview: {
-    port: 4173,
+    port: 3000,
     host: true
   }
 });
