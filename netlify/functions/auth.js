@@ -151,8 +151,18 @@ async function handleSeed(data) {
       };
     }
 
-    const email = 'Basil@flashfundingsolutions.com';
-    const password = 'Bea$t092500';
+    // Get credentials from environment variables for security
+    const email = process.env.SEED_EMAIL;
+    const password = process.env.SEED_PASSWORD;
+    
+    if (!email || !password) {
+      return {
+        statusCode: 500,
+        headers: corsHeaders,
+        body: JSON.stringify({ error: 'Seed credentials not configured' })
+      };
+    }
+
     const hash = await bcrypt.hash(password, 12);
     
     const { error } = await supabase.from('employees').insert({
