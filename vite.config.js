@@ -11,22 +11,5 @@ export default defineConfig({
         secure: false
       }
     }
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: false,
-    minify: 'esbuild', // Changed from 'terser' to 'esbuild' for better reliability
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom']
-        }
-      }
-    }
-  },
-  preview: {
-    port: 3000,
-    host: true
   }
 });

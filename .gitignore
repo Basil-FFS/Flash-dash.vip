@@ -7,7 +7,6 @@ yarn-error.log*
 # Build outputs
 dist/
 build/
-*.local
 
 # Environment files
 .env
@@ -15,20 +14,16 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
-env.production
 
 # IDE files
 .vscode/
 .idea/
-*.swp
-*.swo
 
 # OS files
 .DS_Store
 Thumbs.db
 
 # Logs
-logs
 *.log
 
 # Runtime data
@@ -36,21 +31,3 @@ pids
 *.pid
 *.seed
 *.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-
-# Dependency directories
-jspm_packages/
-
-# Optional npm cache directory
-.npm
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity

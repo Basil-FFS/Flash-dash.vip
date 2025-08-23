@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Production API URL - update this to your actual backend domain
+// Use localhost for development, production API for production
 const api = axios.create({ 
-  baseURL: import.meta.env.VITE_API_BASE || 'https://api.flashdash.vip' 
+  baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:8081' 
 });
 
 api.interceptors.request.use((cfg) => {
