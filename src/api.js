@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Use Render backend for production, localhost for development
 const api = axios.create({ 
-  baseURL: import.meta.env.VITE_API_BASE || 'https://flash-dash-backend.onrender.com' 
+  baseURL: 'https://flash-dash-backend.onrender.com' 
 });
 
 api.interceptors.request.use((cfg) => {
