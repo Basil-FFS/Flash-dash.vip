@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npx vite build",
-    "build:prod": "npx vite build --mode production",
+    "build": "vite build",
+    "build:prod": "vite build --mode production",
     "preview": "vite preview",
     "start": "vite",
     "deploy": "npm run build:prod && echo 'Build complete. Upload dist/ folder to your web server.'"
