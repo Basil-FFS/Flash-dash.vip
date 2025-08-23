@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:prod": "vite build --mode production",
+    "build:prod": "vite build",
     "preview": "vite preview",
     "start": "vite",
-    "deploy": "npm run build:prod && echo 'Build complete. Upload dist/ folder to your web server.'"
+    "deploy": "npm run build && echo 'Build complete. Upload dist/ folder to your web server.'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

@@ -14,16 +14,8 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false,
-    minify: 'esbuild', // Changed from 'terser' to 'esbuild' for better reliability
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom']
-        }
-      }
-    }
+    sourcemap: false
+    // Removed custom minification and chunk splitting for better Vercel compatibility
   },
   preview: {
     port: 3000,
