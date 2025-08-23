@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Use Netlify Functions instead of localhost
+// Production API URL - update this to your actual backend domain
 const api = axios.create({ 
-  baseURL: import.meta.env.VITE_API_BASE || '/.netlify/functions' 
+  baseURL: import.meta.env.VITE_API_BASE || 'https://api.flashdash.vip' 
 });
 
 api.interceptors.request.use((cfg) => {
