@@ -386,16 +386,19 @@ export default function AdminPanel() {
               {/* Agent First Name Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Agent First Name *
+                  Agent Name * (This is the name that will appear on forms)
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.agentName}
                   onChange={(e) => setFormData({ ...formData, agentName: e.target.value })}
-                  placeholder="Enter agent's first name"
+                  placeholder="Enter the name to display on forms (e.g., John, Sarah)"
                   className="input-field"
                 />
+                <p className="text-sm text-gray-500 mt-1">
+                  This name will be displayed to clients on the financial form
+                </p>
               </div>
 
               {/* First Name Field */}
@@ -509,16 +512,19 @@ export default function AdminPanel() {
               {/* Agent First Name Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Agent First Name *
+                  Agent Name * (This is the name that will appear on forms)
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.agentName}
                   onChange={(e) => setFormData({ ...formData, agentName: e.target.value })}
-                  placeholder="Enter agent's first name"
+                  placeholder="Enter the name to display on forms (e.g., John, Sarah)"
                   className="input-field"
                 />
+                <p className="text-sm text-gray-500 mt-1">
+                  This name will be displayed to clients on the financial form
+                </p>
               </div>
 
               {/* First Name Field */}

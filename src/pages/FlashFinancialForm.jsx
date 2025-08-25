@@ -5,20 +5,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import api from '../api.js';
 
 const schema = z.object({
-  Fname: z.string().min(1, 'First name is required'),
-  Lname: z.string().min(1, 'Last name is required'),
+  Fname: z.string().optional(),
+  Lname: z.string().optional(),
   phone: z.string().min(10, 'Phone number is required').max(12, 'Phone number too long'),
-  email: z.string().email('Valid email is required'),
-  address: z.string().min(3, 'Address is required'),
-  city: z.string().min(2, 'City is required'),
-  state: z.string().length(2, 'State is required'),
-  zip: z.string().regex(/^\d{5}$/, 'ZIP must be 5 digits'),
-  employment_status: z.string().min(1, 'Employment status is required'),
-  monthly_income: z.string().min(1, 'Monthly income is required'),
+  email: z.string().email('Valid email is required').optional().or(z.literal('')),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip: z.string().optional(),
+  employment_status: z.string().optional(),
+  monthly_income: z.string().optional(),
   soft_credit_permission: z.boolean(),
-  DOB: z.string().min(8, 'Date of birth is required').max(10, 'Date of birth too long'),
-  SSN: z.string().length(4, 'SSN must be exactly 4 digits'),
-  total_unsecured_debt: z.string().min(1, 'Total unsecured debt is required')
+  DOB: z.string().optional(),
+  SSN: z.string().optional(),
+  total_unsecured_debt: z.string().optional()
 });
 
 const states = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'];
@@ -71,19 +71,19 @@ export default function FlashFinancialForm() {
     try {
       // Format data for ForthCRM
       const forthData = {
-        address: data.address,
-        city: data.city,
-        DOB: data.DOB,
-        email: data.email,
-        employment_status: data.employment_status,
-        Fname: data.Fname,
-        Lname: data.Lname,
-        monthly_income: parseFloat(data.monthly_income.replace(/[$,]/g, '')),
+        address: data.address || '',
+        city: data.city || '',
+        DOB: data.DOB || '',
+        email: data.email || '',
+        employment_status: data.employment_status || '',
+        Fname: data.Fname || '',
+        Lname: data.Lname || '',
+        monthly_income: data.monthly_income ? parseFloat(data.monthly_income.replace(/[$,]/g, '')) : 0,
         phone: data.phone,
-        SSN: `000-00-${data.SSN}`,
-        state: data.state,
-        total_unsecured_debt: data.total_unsecured_debt.replace(/[$,]/g, ''),
-        zip: data.zip
+        SSN: data.SSN ? `000-00-${data.SSN}` : '',
+        state: data.state || '',
+        total_unsecured_debt: data.total_unsecured_debt ? data.total_unsecured_debt.replace(/[$,]/g, '') : '',
+        zip: data.zip || ''
       };
 
       // Use backend proxy to avoid CORS
@@ -280,7 +280,7 @@ export default function FlashFinancialForm() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">First Name *</label>
+                  <label className="block text-sm font-medium text-gray-700">First Name</label>
                   <input
                     {...register('Fname')}
                     placeholder="First Name"
@@ -292,7 +292,7 @@ export default function FlashFinancialForm() {
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Last Name *</label>
+                  <label className="block text-sm font-medium text-gray-700">Last Name</label>
                   <input
                     {...register('Lname')}
                     placeholder="Last Name"
@@ -336,7 +336,7 @@ export default function FlashFinancialForm() {
                 </p>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Email Address *</label>
+                <label className="block text-sm font-medium text-gray-700">Email Address</label>
                 <input
                   type="email"
                   {...register('email')}
@@ -357,7 +357,7 @@ export default function FlashFinancialForm() {
                 </p>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Street Address *</label>
+                <label className="block text-sm font-medium text-gray-700">Street Address</label>
                 <input
                   {...register('address')}
                   placeholder="123 Main Street"
@@ -378,7 +378,7 @@ export default function FlashFinancialForm() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">City *</label>
+                  <label className="block text-sm font-medium text-gray-700">City</label>
                   <input
                     {...register('city')}
                     placeholder="City"
@@ -390,7 +390,7 @@ export default function FlashFinancialForm() {
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">State *</label>
+                  <label className="block text-sm font-medium text-gray-700">State</label>
                   <select
                     {...register('state')}
                     className="input-field"
@@ -406,7 +406,7 @@ export default function FlashFinancialForm() {
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">ZIP Code *</label>
+                  <label className="block text-sm font-medium text-gray-700">ZIP Code</label>
                   <input
                     {...register('zip')}
                     placeholder="12345"
@@ -435,7 +435,7 @@ export default function FlashFinancialForm() {
                 </p>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Employment Status *</label>
+                <label className="block text-sm font-medium text-gray-700">Employment Status</label>
                 <select
                   {...register('employment_status')}
                   className="input-field"
@@ -458,7 +458,7 @@ export default function FlashFinancialForm() {
                 </p>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Monthly Income *</label>
+                <label className="block text-sm font-medium text-gray-700">Monthly Income</label>
                 <input
                   {...register('monthly_income')}
                   placeholder="$5,000"
@@ -509,7 +509,7 @@ export default function FlashFinancialForm() {
                 </p>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Date of Birth *</label>
+                <label className="block text-sm font-medium text-xl">Date of Birth</label>
                 <input
                   {...register('DOB')}
                   placeholder="MM/DD/YYYY"
@@ -532,7 +532,7 @@ export default function FlashFinancialForm() {
                 </p>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">SSN (Last 4 digits) *</label>
+                <label className="block text-sm font-medium text-gray-700">SSN (Last 4 digits)</label>
                 <div className="flex items-center space-x-2">
                   <span className="text-lg text-gray-500 font-mono">000-00-</span>
                   <input
@@ -542,7 +542,7 @@ export default function FlashFinancialForm() {
                     onInput={(e) => {
                       e.target.value = maskSSN(e.target.value);
                     }}
-                    className="input-field w-24 text-center font-mono text-lg"
+                    className="input-field w-24 text-center font-lg"
                   />
                 </div>
                 {errors.SSN && (

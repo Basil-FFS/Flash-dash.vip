@@ -19,13 +19,13 @@ export default function Login() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', data.user.role);
       
-      // Store agent name if available
+      // Store agent name - must be set in database
       if (data.user.agentName) {
         localStorage.setItem('agentName', data.user.agentName);
-      } else if (data.user.email) {
-        // Fallback: use email prefix as agent name
-        const emailPrefix = data.user.email.split('@')[0];
-        localStorage.setItem('agentName', emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1));
+      } else {
+        // No agent name set - this should not happen if admin properly configured users
+        localStorage.setItem('agentName', 'Agent');
+        console.warn('User has no agentName set. Please set agentName in admin panel.');
       }
       
       window.location.href = '/';
