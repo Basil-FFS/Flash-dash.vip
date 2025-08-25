@@ -47,7 +47,7 @@ export default function Login() {
             </div>
           )}
           <h1 className="text-4xl font-bold text-white mb-2">FlashDash</h1>
-          <p className="text-primary-200 text-lg">Emplyee Log In Only</p>
+          <p className="text-primary-200 text-lg">Employee Log In Only</p>
         </div>
 
         {/* Login Form */}
