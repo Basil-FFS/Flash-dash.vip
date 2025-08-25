@@ -216,7 +216,7 @@ export default function FlashFinancialForm() {
           <div className="max-w-4xl mx-auto space-y-6">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
               <p className="text-lg leading-relaxed">
-                <strong className="text-yellow-300"></strong> "Thank you for calling Flas Financial Solutions, my name is{' '}
+                <strong className="text-yellow-300"></strong> "Thank you for calling Flash Financial Solutions, my name is{' '}
                 <span className="text-yellow-300 font-bold text-xl">{agentName}</span>{' '}
                 and we are on a recorded line. To whom do I have the pleasure of speaking with?"
               </p>
