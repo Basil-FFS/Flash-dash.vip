@@ -259,7 +259,7 @@ export default function FlashFinancialForm() {
               <p className="text-lg leading-relaxed">
                 <strong className="text-yellow-300"></strong> "Hello{' '}
                 <span className="text-yellow-300 font-bold text-xl">{firstName || '[Name]'}</span>{' '}
-                , how much debt are you calling about today?"
+                how are you doing today, -Reply-, and how much debt are you calling about today?"
               </p>
             </div>
           </div>
