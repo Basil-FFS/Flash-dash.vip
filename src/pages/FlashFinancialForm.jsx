@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -38,7 +38,38 @@ export default function FlashFinancialForm() {
   });
 
   const firstName = watch('Fname') || '';
-  const agentName = localStorage.getItem('agentName') || 'Agent';
+  const [agentName, setAgentName] = useState(localStorage.getItem('agentName') || 'Agent');
+
+  // Fetch current user's agent name from database
+  useEffect(() => {
+    const fetchAgentName = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          // Get current user info to fetch their agent name
+          const response = await api.get('/auth/me');
+          console.log('🔍 Auth /me response:', response.data);
+          if (response.data && response.data.user && response.data.user.agentName) {
+            console.log('✅ Setting agent name to:', response.data.user.agentName);
+            setAgentName(response.data.user.agentName);
+            localStorage.setItem('agentName', response.data.user.agentName);
+          } else {
+            console.log('⚠️ No agent name found in response:', response.data);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch agent name:', error);
+        // Fallback to localStorage value
+        const storedName = localStorage.getItem('agentName');
+        console.log('🔄 Fallback to localStorage agent name:', storedName);
+        if (storedName && storedName !== 'Agent') {
+          setAgentName(storedName);
+        }
+      }
+    };
+
+    fetchAgentName();
+  }, []);
 
   // Phone number masking
   function maskPhone(value) {
@@ -194,6 +225,8 @@ export default function FlashFinancialForm() {
           Please fill out the form below to submit a lead to Forth.
         </p>
       </div>
+
+
 
       {/* Enhanced Conversation Script Hero Section */}
       <div className="bg-gradient-to-br from-teal-600 via-emerald-600 to-teal-700 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden">

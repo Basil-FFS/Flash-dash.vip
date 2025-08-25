@@ -386,7 +386,7 @@ export default function AdminPanel() {
               {/* Agent First Name Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Agent Name * (This is the name that will appear on forms)
+                  Agent Name * 
                 </label>
                 <input
                   type="text"
@@ -397,7 +397,7 @@ export default function AdminPanel() {
                   className="input-field"
                 />
                 <p className="text-sm text-gray-500 mt-1">
-                  This name will be displayed to clients on the financial form
+                  TO be displayed on dashboard and on scripts for agents
                 </p>
               </div>
 
