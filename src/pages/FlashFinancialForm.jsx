@@ -259,7 +259,7 @@ export default function FlashFinancialForm() {
               <p className="text-lg leading-relaxed">
                 <strong className="text-yellow-300"></strong> "Hello{' '}
                 <span className="text-yellow-300 font-bold text-xl">{firstName || '[Name]'}</span>{' '}
-                how are you doing today, -Reply-, and how much debt are you calling about today?"
+                how are you doing today?"
               </p>
             </div>
           </div>
@@ -270,26 +270,26 @@ export default function FlashFinancialForm() {
       <div className="card">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           {/* Total Unsecured Debt */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                1
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900">
-                How much debt are you calling about today?
-              </h3>
-            </div>
-            <input
-              {...register('total_unsecured_debt')}
-              placeholder="$15,000"
-              className="input-field text-lg"
-            />
-            {errors.total_unsecured_debt && (
-              <p className="text-red-600 text-sm font-medium">
-                ⚠️ {errors.total_unsecured_debt.message}
-              </p>
-            )}
-          </div>
+         <div className="space-y-4">
+  <div className="bg-blue-50 p-4 rounded-xl border-l-4 border-teal-500">
+    <p className="text-gray-700 font-medium">
+      <strong>1.</strong> How much debt are you calling about?
+    </p>
+  </div>
+  <div className="space-y-2">
+    <label className="block text-sm font-medium text-gray-700">
+      Total Unsecured Debt *
+    </label>
+    <input
+      {...register('total_unsecured_debt')}
+      placeholder="$15,000"
+      className="input-field"
+    />
+    {errors.total_unsecured_debt && (
+      <p className="text-red-600 text-sm">⚠️ {errors.total_unsecured_debt.message}</p>
+    )}
+  </div>
+</div>
 
           {/* Information Verification Script */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border-l-4 border-teal-500">
