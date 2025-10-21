@@ -1,25 +1,58 @@
-import { Routes, Route, Navigate, Link } from 'react-router-dom';
+import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import FlashFinancialForm from './pages/FlashFinancialForm.jsx';
 import AdminPanel from './pages/AdminPanel.jsx';
+import Reports from './pages/Reports.jsx';
+import GlobalNotice from './components/GlobalNotice.jsx';
+import RequestStatusRibbon from './components/RequestStatusRibbon.jsx';
 
 const brand = import.meta.env.VITE_BRAND_COLOR || '#14b8a6';
 const logo = import.meta.env.VITE_LOGO_URL;
 
-function Protected({ children }) {
-  const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/login" replace />;
-}
+const roleNav = {
+  admin: [
+    { label: 'Dashboard', to: '/' },
+    { label: 'Reports', to: '/reports' },
+    { label: 'Lead Intake', to: '/flash-form' },
+    { label: 'Admin Panel', to: '/admin' }
+  ],
+  intake: [
+    { label: 'Dashboard', to: '/' },
+    { label: 'Intake Metrics', to: '/reports?section=intake' }
+  ],
+  opener: [
+    { label: 'Dashboard', to: '/' },
+    { label: 'Opener Metrics', to: '/reports?section=opener' }
+  ],
+  default: [
+    { label: 'Dashboard', to: '/' }
+  ]
+};
 
-function AdminOnly({ children }) {
-  const role = localStorage.getItem('role');
-  return role === 'admin' ? children : <Navigate to="/" replace />;
+function Protected({ children, allowedRoles }) {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && allowedRoles.length) {
+    const role = localStorage.getItem('role');
+    if (!role || !allowedRoles.includes(role)) {
+      return <Navigate to="/login" replace />;
+    }
+  }
+
+  return children;
 }
 
 function Layout({ children }) {
   const agentName = localStorage.getItem('agentName') || 'Agent';
-  
+  const role = localStorage.getItem('role') || 'default';
+  const location = useLocation();
+
+  const links = roleNav[role] || roleNav.default;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-50 via-white to-primary-50">
       {/* Modern Header */}
@@ -39,26 +72,21 @@ function Layout({ children }) {
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link 
-                to="/" 
-                className="text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-white/10"
-              >
-                Dashboard
-              </Link>
-              <Link 
-                to="/flash-form" 
-                className="text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-white/10"
-              >
-                Lead Intake
-              </Link>
-              {localStorage.getItem('role') === 'admin' && (
-                <Link 
-                  to="/admin" 
-                  className="text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-white/10"
+              {links.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      isActive || location.pathname === item.to.split('?')[0]
+                        ? 'bg-white/20 text-white'
+                        : 'text-white/80 hover:text-white hover:bg-white/10'
+                    }`
+                  }
                 >
-                  Admin Panel
-                </Link>
-              )}
+                  {item.label}
+                </NavLink>
+              ))}
             </nav>
 
             {/* User Menu */}
@@ -87,6 +115,8 @@ function Layout({ children }) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
+      <GlobalNotice />
+      <RequestStatusRibbon />
     </div>
   );
 }
@@ -95,9 +125,46 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/" element={<Protected><Layout><Dashboard /></Layout></Protected>} />
-      <Route path="/flash-form" element={<Protected><Layout><FlashFinancialForm /></Layout></Protected>} />
-      <Route path="/admin" element={<Protected><AdminOnly><Layout><AdminPanel /></Layout></AdminOnly></Protected>} />
+      <Route
+        path="/"
+        element={
+          <Protected allowedRoles={['admin', 'intake', 'opener']}>
+            <Layout>
+              <Dashboard />
+            </Layout>
+          </Protected>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <Protected allowedRoles={['admin', 'intake', 'opener']}>
+            <Layout>
+              <Reports />
+            </Layout>
+          </Protected>
+        }
+      />
+      <Route
+        path="/flash-form"
+        element={
+          <Protected allowedRoles={['admin', 'intake']}>
+            <Layout>
+              <FlashFinancialForm />
+            </Layout>
+          </Protected>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <Protected allowedRoles={['admin']}>
+            <Layout>
+              <AdminPanel />
+            </Layout>
+          </Protected>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
