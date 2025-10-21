@@ -1,5 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../api.js';
+import AdminSettingsModal from '../components/AdminSettingsModal.jsx';
+
+const FORM_DEFAULTS = {
+  email: '',
+  password: '',
+  role: 'opener',
+  agentName: '',
+  firstName: '',
+  lastName: ''
+};
+
+const ROLE_BADGES = {
+  admin: 'bg-rose-100 text-rose-700',
+  intake: 'bg-sky-100 text-sky-700',
+  opener: 'bg-amber-100 text-amber-700',
+  agent: 'bg-slate-100 text-slate-600'
+};
 
 export default function AdminPanel() {
   const [employees, setEmployees] = useState([]);
@@ -9,53 +27,62 @@ export default function AdminPanel() {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resettingEmployee, setResettingEmployee] = useState(null);
   const [newPassword, setNewPassword] = useState('');
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    role: 'agent',
-    agentName: '',
-    firstName: '',
-    lastName: ''
-  });
+  const [formData, setFormData] = useState(FORM_DEFAULTS);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isExporting, setIsExporting] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [settingsTab, setSettingsTab] = useState('mapping');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const settingsParam = searchParams.get('settings');
+
+  const roleCounts = useMemo(() => {
+    return employees.reduce(
+      (acc, employee) => {
+        const role = employee.role || 'agent';
+        acc.total += 1;
+        acc[role] = (acc[role] || 0) + 1;
+        return acc;
+      },
+      { total: 0, admin: 0, intake: 0, opener: 0, agent: 0 }
+    );
+  }, [employees]);
 
   useEffect(() => {
     fetchEmployees();
   }, []);
 
+  useEffect(() => {
+    if (!settingsParam) return;
+
+    setSettingsTab(settingsParam === 'access' ? 'access' : 'mapping');
+    setShowSettings(true);
+  }, [settingsParam]);
+
+  const closeSettings = () => {
+    setShowSettings(false);
+    const next = new URLSearchParams(searchParams);
+    next.delete('settings');
+    setSearchParams(next, { replace: true });
+  };
+
   const fetchEmployees = async () => {
     setIsLoading(true);
     try {
-      console.log('🔍 Fetching employees from /admin/employees...');
-      const response = await api.get('/admin/employees');
-      console.log('📡 API Response:', response);
-      console.log('📊 Response data:', response.data);
-      console.log('🔢 Response status:', response.status);
-      
-      // Ensure employees is always an array
-      if (response.data && Array.isArray(response.data)) {
-        console.log('✅ Setting employees array:', response.data);
-        setEmployees(response.data);
-      } else if (response.data && response.data.employees && Array.isArray(response.data.employees)) {
-        console.log('✅ Setting employees from nested property:', response.data.employees);
-        setEmployees(response.data.employees);
+      const { data } = await api.get('/admin/employees');
+      if (Array.isArray(data)) {
+        setEmployees(data);
+      } else if (Array.isArray(data?.employees)) {
+        setEmployees(data.employees);
       } else {
-        console.warn('⚠️ API returned non-array data:', response.data);
-        console.warn('📝 Data type:', typeof response.data);
-        console.warn('🔍 Data structure:', response.data);
         setEmployees([]);
       }
     } catch (err) {
-      console.error('❌ Failed to fetch employees:', err);
-      console.error('🚨 Error response:', err.response);
-      console.error('📊 Error status:', err.response?.status);
-      console.error('📝 Error data:', err.response?.data);
       setError('Failed to load employees. Please try again.');
-      setEmployees([]); // Ensure it's always an array
+      setEmployees([]);
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +94,7 @@ export default function AdminPanel() {
     try {
       await api.post('/admin/employees', formData);
       setSuccess('Employee created successfully!');
-      setFormData({ email: '', password: '', role: 'agent', agentName: '', firstName: '', lastName: '' });
+      setFormData(FORM_DEFAULTS);
       setShowForm(false);
       fetchEmployees();
     } catch (err) {
@@ -79,15 +106,15 @@ export default function AdminPanel() {
 
   const handleEdit = (employee) => {
     setEditingEmployee(employee);
-    setFormData({
-      email: employee.email,
-      password: '', // Don't pre-fill password
-      role: employee.role,
-      agentName: employee.agentName || '',
-      firstName: employee.firstName || '',
-      lastName: employee.lastName || ''
-    });
-    setShowEditForm(true);
+      setFormData({
+        email: employee.email,
+        password: '',
+        role: employee.role || 'opener',
+        agentName: employee.agentName || '',
+        firstName: employee.firstName || '',
+        lastName: employee.lastName || ''
+      });
+      setShowEditForm(true);
   };
 
   const handleUpdate = async (e) => {
@@ -102,7 +129,7 @@ export default function AdminPanel() {
       setSuccess('Employee updated successfully!');
       setShowEditForm(false);
       setEditingEmployee(null);
-      setFormData({ email: '', password: '', role: 'agent', agentName: '', firstName: '', lastName: '' });
+      setFormData(FORM_DEFAULTS);
       fetchEmployees();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update employee');
@@ -164,21 +191,38 @@ export default function AdminPanel() {
     <div className="space-y-8">
       {/* Header Section */}
       <div className="gradient-bg rounded-3xl p-8 text-white shadow-2xl">
-        <div className="max-w-4xl">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Admin Panel 🛠️
-          </h1>
-          <p className="text-xl text-teal-100 mb-6">
-            Manage your team, monitor performance, and export data from your FlashDash CRM.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <button 
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-3">
+              <h1 className="text-4xl md:text-5xl font-bold">
+                Admin Panel
+              </h1>
+              <button
+                onClick={() => {
+                  setSettingsTab('mapping');
+                  setShowSettings(true);
+                  const next = new URLSearchParams(searchParams);
+                  next.set('settings', 'mapping');
+                  setSearchParams(next, { replace: true });
+                }}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-2xl transition hover:bg-white/20"
+                aria-label="Open admin settings"
+              >
+                ⚙️
+              </button>
+            </div>
+            <p className="mt-4 text-xl text-teal-100">
+              Manage your team, monitor performance, and export data from your FlashDash CRM.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
               onClick={() => setShowForm(true)}
               className="btn-primary"
             >
               👥 Add New Employee
             </button>
-            <button 
+            <button
               onClick={handleExport}
               disabled={isExporting}
               className="btn-secondary"
@@ -278,12 +322,12 @@ export default function AdminPanel() {
                             {employee.lastName && ` ${employee.lastName}`}
                           </h4>
                           <p className="text-sm text-gray-600">{employee.email}</p>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            employee.role === 'admin' 
-                              ? 'bg-red-100 text-red-800' 
-                              : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {employee.role}
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              ROLE_BADGES[employee.role] || ROLE_BADGES.agent
+                            }`}
+                          >
+                            {employee.role || 'agent'}
                           </span>
                         </div>
                       </div>
@@ -327,22 +371,20 @@ export default function AdminPanel() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Team Overview</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Total Agents</span>
-                <span className="font-semibold text-gray-900">
-                  {employees.filter(e => e.role === 'agent').length}
-                </span>
+                <span className="text-gray-600">Active Users</span>
+                <span className="font-semibold text-emerald-600">{roleCounts.total}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Admins</span>
-                <span className="font-semibold text-gray-900">
-                  {employees.filter(e => e.role === 'admin').length}
-                </span>
+                <span className="font-semibold text-gray-900">{roleCounts.admin}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Active Users</span>
-                <span className="font-semibold text-emerald-600">
-                  {employees.length}
-                </span>
+                <span className="text-gray-600">Intake Specialists</span>
+                <span className="font-semibold text-gray-900">{roleCounts.intake}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Openers</span>
+                <span className="font-semibold text-gray-900">{roleCounts.opener + roleCounts.agent}</span>
               </div>
             </div>
           </div>
@@ -370,256 +412,216 @@ export default function AdminPanel() {
 
       {/* Add Employee Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="card max-w-md w-full mx-4 animate-scale-in">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Add New Employee</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur">
+          <div className="w-full max-w-3xl rounded-3xl border border-gray-100 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">Add New Team Member</h3>
+                <p className="text-sm text-gray-500">Capture the basics so we can provision the right access.</p>
+              </div>
               <button
                 onClick={() => setShowForm(false)}
-                className="text-gray-400 hover:text-gray-600 text-xl"
+                className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
               >
                 ✕
               </button>
             </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Agent First Name Field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Agent Name * 
+            <form onSubmit={handleSubmit} className="px-6 py-6">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <label className="text-sm font-medium text-gray-700">
+                  <span>Agent Display Name *</span>
+                  <input
+                    type="text"
+                    required
+                    value={formData.agentName}
+                    onChange={(e) => setFormData({ ...formData, agentName: e.target.value })}
+                    placeholder="e.g. Bella"
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                  <span className="mt-1 block text-xs text-gray-500">Appears on dashboards and call scripts.</span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.agentName}
-                  onChange={(e) => setFormData({ ...formData, agentName: e.target.value })}
-                  placeholder="Enter the name to display on forms (e.g., John, Sarah)"
-                  className="input-field"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  TO be displayed on dashboard and on scripts for agents
-                </p>
-              </div>
-
-              {/* First Name Field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  First Name *
+                <label className="text-sm font-medium text-gray-700">
+                  <span>Role *</span>
+                  <select
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    {!['admin', 'intake', 'opener'].includes(formData.role) && (
+                      <option value={formData.role}>{formData.role}</option>
+                    )}
+                    <option value="admin">Admin</option>
+                    <option value="intake">Intake</option>
+                    <option value="opener">Opener</option>
+                  </select>
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  placeholder="Enter first name"
-                  className="input-field"
-                />
-              </div>
-
-              {/* Last Name Field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name *
+                <label className="text-sm font-medium text-gray-700">
+                  <span>First Name *</span>
+                  <input
+                    type="text"
+                    required
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  placeholder="Enter last name"
-                  className="input-field"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
+                <label className="text-sm font-medium text-gray-700">
+                  <span>Last Name *</span>
+                  <input
+                    type="text"
+                    required
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
                 </label>
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="employee@company.com"
-                  className="input-field"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password *
+                <label className="text-sm font-medium text-gray-700">
+                  <span>Email *</span>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="agent@flashdash.com"
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
                 </label>
-                <input
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Minimum 6 characters"
-                  className="input-field"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Role *
+                <label className="text-sm font-medium text-gray-700">
+                  <span>Temporary Password *</span>
+                  <input
+                    type="password"
+                    required
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Minimum 6 characters"
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
                 </label>
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="input-field"
-                >
-                  <option value="agent">Agent</option>
-                  <option value="admin">Admin</option>
-                </select>
               </div>
-
-              <div className="flex space-x-3 pt-4">
+              <div className="mt-6 flex flex-col gap-3 md:flex-row md:justify-end">
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="flex-1 btn-secondary"
+                  className="rounded-xl border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 btn-primary"
+                  className="inline-flex items-center justify-center rounded-xl bg-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-600 disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Employee'}
+                  {isSubmitting ? 'Creating…' : 'Create Employee'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
       {/* Edit Employee Modal */}
       {showEditForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="card max-w-md w-full mx-4 animate-scale-in">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Edit Employee</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur">
+          <div className="w-full max-w-3xl rounded-3xl border border-gray-100 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">Edit Team Member</h3>
+                <p className="text-sm text-gray-500">Update roles or details without disrupting access.</p>
+              </div>
               <button
                 onClick={() => setShowEditForm(false)}
-                className="text-gray-400 hover:text-gray-600 text-xl"
+                className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
               >
                 ✕
               </button>
             </div>
-
-            <form onSubmit={handleUpdate} className="space-y-4">
-              {/* Agent First Name Field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Agent Name * (This is the name that will appear on forms)
+            <form onSubmit={handleUpdate} className="px-6 py-6">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <label className="text-sm font-medium text-gray-700">
+                  <span>Agent Display Name *</span>
+                  <input
+                    type="text"
+                    required
+                    value={formData.agentName}
+                    onChange={(e) => setFormData({ ...formData, agentName: e.target.value })}
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.agentName}
-                  onChange={(e) => setFormData({ ...formData, agentName: e.target.value })}
-                  placeholder="Enter the name to display on forms (e.g., John, Sarah)"
-                  className="input-field"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  This name will be displayed to clients on the financial form
-                </p>
-              </div>
-
-              {/* First Name Field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  First Name *
+                <label className="text-sm font-medium text-gray-700">
+                  <span>Role *</span>
+                  <select
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    {!['admin', 'intake', 'opener'].includes(formData.role) && (
+                      <option value={formData.role}>{formData.role}</option>
+                    )}
+                    <option value="admin">Admin</option>
+                    <option value="intake">Intake</option>
+                    <option value="opener">Opener</option>
+                  </select>
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  placeholder="Enter first name"
-                  className="input-field"
-                />
-              </div>
-
-              {/* Last Name Field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name *
+                <label className="text-sm font-medium text-gray-700">
+                  <span>First Name *</span>
+                  <input
+                    type="text"
+                    required
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  placeholder="Enter last name"
-                  className="input-field"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
+                <label className="text-sm font-medium text-gray-700">
+                  <span>Last Name *</span>
+                  <input
+                    type="text"
+                    required
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
                 </label>
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="employee@company.com"
-                  className="input-field"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
+                <label className="text-sm font-medium text-gray-700 md:col-span-2">
+                  <span>Email *</span>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
                 </label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Leave blank to keep current password"
-                  className="input-field"
-                />
-                <p className="text-xs text-gray-500 mt-1">Leave blank to keep current password</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Role *
+                <label className="text-sm font-medium text-gray-700 md:col-span-2">
+                  <span>Update Password</span>
+                  <input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Leave blank to keep current password"
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
                 </label>
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="input-field"
-                >
-                  <option value="agent">Agent</option>
-                  <option value="admin">Admin</option>
-                </select>
               </div>
-
-              <div className="flex space-x-3 pt-4">
+              <div className="mt-6 flex flex-col gap-3 md:flex-row md:justify-end">
                 <button
                   type="button"
                   onClick={() => setShowEditForm(false)}
-                  className="flex-1 btn-secondary"
+                  className="rounded-xl border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 btn-primary"
+                  className="inline-flex items-center justify-center rounded-xl bg-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-600 disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Updating...' : 'Update Employee'}
+                  {isSubmitting ? 'Saving…' : 'Update Employee'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
       {/* Reset Password Modal */}
       {showResetPassword && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -669,6 +671,7 @@ export default function AdminPanel() {
           </div>
         </div>
       )}
+      <AdminSettingsModal open={showSettings} onClose={closeSettings} initialTab={settingsTab} />
     </div>
   );
 }
