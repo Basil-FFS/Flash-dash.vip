@@ -80,6 +80,7 @@ export default function AdminSettingsModal({ open, onClose, initialTab = 'mappin
   const [mappingRows, setMappingRows] = useState([]);
   const [mappingLoading, setMappingLoading] = useState(false);
   const [mappingSaving, setMappingSaving] = useState(false);
+  const [mappingDeletingId, setMappingDeletingId] = useState('');
   const [mappingError, setMappingError] = useState('');
   const [mappingInfo, setMappingInfo] = useState('');
   const [selectedForth, setSelectedForth] = useState('');
@@ -197,6 +198,8 @@ export default function AdminSettingsModal({ open, onClose, initialTab = 'mappin
     setSelectedForth(forthId);
     const current = mappingRows.find((row) => row.id === forthId);
     setSelectedFlash(current?.flashUserId || '');
+    setMappingInfo('');
+    setMappingError('');
   };
 
   const saveMapping = async () => {
@@ -204,6 +207,7 @@ export default function AdminSettingsModal({ open, onClose, initialTab = 'mappin
 
     setMappingSaving(true);
     setMappingError('');
+    setMappingInfo('');
 
     try {
       await api.post('/api/forthcrm/mapping/set', {
@@ -234,6 +238,62 @@ export default function AdminSettingsModal({ open, onClose, initialTab = 'mappin
       setMappingError('Unable to save mapping right now. Please retry shortly.');
     } finally {
       setMappingSaving(false);
+    }
+  };
+
+  const deleteMapping = async (forthId) => {
+    if (!forthId) return;
+
+    setMappingDeletingId(forthId);
+    setMappingError('');
+    setMappingInfo('');
+
+    try {
+      await api.post('/api/forthcrm/mapping/delete', { forthUserId: forthId });
+
+      setMappingRows((prev) => {
+        const row = prev.find((item) => item.id === forthId);
+        const forthRecord = forthUsers.find((user) => user.id === forthId);
+
+        if (!forthRecord && row) {
+          return prev
+            .filter((item) => item.id !== forthId)
+            .sort((a, b) => a.forthName.localeCompare(b.forthName));
+        }
+
+        if (!forthRecord && !row) {
+          return prev;
+        }
+
+        const updated = prev.map((item) => {
+          if (item.id !== forthId) {
+            return item;
+          }
+
+          const forthName = forthRecord?.name || row?.forthName || 'Forth User';
+
+          return {
+            id: forthId,
+            forthName,
+            flashUserId: '',
+            flashName: '—',
+            status: 'pending'
+          };
+        });
+
+        return updated.sort((a, b) => a.forthName.localeCompare(b.forthName));
+      });
+
+      if (selectedForth === forthId) {
+        setSelectedForth('');
+        setSelectedFlash('');
+      }
+
+      setMappingInfo('Mapping removed.');
+    } catch (err) {
+      setMappingError('Unable to remove mapping right now. Please retry shortly.');
+    } finally {
+      setMappingDeletingId('');
     }
   };
 
@@ -374,6 +434,13 @@ export default function AdminSettingsModal({ open, onClose, initialTab = 'mappin
                                   className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 transition hover:border-teal-200 hover:text-teal-600"
                                 >
                                   Edit
+                                </button>
+                                <button
+                                  onClick={() => deleteMapping(row.id)}
+                                  disabled={mappingDeletingId === row.id}
+                                  className="inline-flex items-center rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-60"
+                                >
+                                  {mappingDeletingId === row.id ? 'Removing…' : 'Remove'}
                                 </button>
                               </div>
                             ) : (

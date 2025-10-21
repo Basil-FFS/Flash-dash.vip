@@ -158,6 +158,16 @@ function DataTable({ title, description, dataset }) {
   const totalPages = Math.max(1, Math.ceil((dataset.rows?.length || 0) / pageSize));
   const pageRows = (dataset.rows || []).slice(page * pageSize, page * pageSize + pageSize);
 
+  useEffect(() => {
+    setPage(0);
+  }, [dataset.columns, dataset.rows]);
+
+  useEffect(() => {
+    if (page >= totalPages) {
+      setPage(Math.max(0, totalPages - 1));
+    }
+  }, [page, totalPages]);
+
   const exportCsv = () => {
     const header = dataset.columns.map((col) => `"${col.label}"`).join(',');
     const body = (dataset.rows || [])

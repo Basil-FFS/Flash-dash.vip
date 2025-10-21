@@ -5,6 +5,7 @@ import FlashFinancialForm from './pages/FlashFinancialForm.jsx';
 import AdminPanel from './pages/AdminPanel.jsx';
 import Reports from './pages/Reports.jsx';
 import GlobalNotice from './components/GlobalNotice.jsx';
+import RequestStatusRibbon from './components/RequestStatusRibbon.jsx';
 
 const brand = import.meta.env.VITE_BRAND_COLOR || '#14b8a6';
 const logo = import.meta.env.VITE_LOGO_URL;
@@ -115,6 +116,7 @@ function Layout({ children }) {
         {children}
       </main>
       <GlobalNotice />
+      <RequestStatusRibbon />
     </div>
   );
 }
