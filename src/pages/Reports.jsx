@@ -17,6 +17,50 @@ const SECTION_LABELS = {
   comparison: 'Comparison Charts'
 };
 
+const COMPANY_COLUMNS = [
+  { key: 'leads_received', label: 'Leads Received' },
+  { key: 'contacted', label: 'Contacted' },
+  { key: 'no_contact', label: 'No Contact' },
+  { key: 'dnc', label: 'DNC' },
+  { key: 'not_interested_wrong_number', label: 'No Longer Interested / Wrong Number' },
+  { key: 'no_credit_report_pulled', label: 'No Credit Report Pulled' },
+  { key: 'credit_report_pulled', label: 'Credit Report Pulled' },
+  { key: 'qualified', label: 'Qualified' },
+  { key: 'not_qualified', label: 'Not Qualified' },
+  { key: 'enrolled', label: 'Enrolled' },
+  { key: 'enrolled_debt', label: 'Enrolled Debt' },
+  { key: 'cancelled', label: 'Cancelled' }
+];
+
+const OPENER_COLUMNS = [
+  { key: 'agent', label: 'AGENT' },
+  { key: 'received', label: 'RECEIVED' },
+  { key: 'cp', label: 'CP' },
+  { key: 'cp_percent', label: 'CP%' },
+  { key: 'transferred', label: 'TRANSFERRED' },
+  { key: 'transferred_percent', label: 'TRANSFERRED%' },
+  { key: 'ta', label: 'TA' },
+  { key: 'cr_error', label: 'CR ERROR' },
+  { key: 'cr_error_percent', label: 'CR ERROR%' }
+];
+
+const INTAKE_COLUMNS = [
+  { key: 'agent', label: 'AGENT' },
+  { key: 'received', label: 'RECEIVED' },
+  { key: 'pitched', label: 'PITCHED' },
+  { key: 'pitched_percent', label: 'PITCHED%' },
+  { key: 'enrolled', label: 'ENROLLED' },
+  { key: 'enrolled_debt', label: 'ENROLLED DEBT' },
+  { key: 'enrollment_conversion', label: 'ENROLLMENT CONVERSION' },
+  { key: 'enrolled_received', label: 'ENROLLED / RECEIVED' }
+];
+
+const SECTION_COLUMNS = {
+  company: COMPANY_COLUMNS,
+  opener: OPENER_COLUMNS,
+  intake: INTAKE_COLUMNS
+};
+
 function isWithinBusinessHours(date = new Date()) {
   const centralDate = new Date(date.toLocaleString('en-US', { timeZone: 'America/Chicago' }));
   const hour = centralDate.getHours();
@@ -34,40 +78,70 @@ function getVisibleSections(role) {
   return ['company', 'opener', 'intake', 'comparison'];
 }
 
+function createBlankRow(columns) {
+  return columns.reduce((acc, column) => {
+    if (column.key === 'agent') {
+      acc[column.key] = '—';
+    } else if (column.key.includes('percent') || column.key.includes('conversion')) {
+      acc[column.key] = '0%';
+    } else {
+      acc[column.key] = 0;
+    }
+    return acc;
+  }, {});
+}
+
+function extractRows(payload) {
+  if (!payload) return [];
+  if (Array.isArray(payload.rows)) return payload.rows;
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.metrics)) return payload.metrics;
+  if (payload.metrics && typeof payload.metrics === 'object') return [payload.metrics];
+  if (typeof payload === 'object') return [payload];
+  return [];
+}
+
+function mapRowsToColumns(rawRows, columns) {
+  if (!Array.isArray(rawRows) || !rawRows.length) {
+    return [createBlankRow(columns)];
+  }
+
+  return rawRows.map((row) => {
+    const normalized = createBlankRow(columns);
+    columns.forEach(({ key }) => {
+      let value = row?.[key];
+
+      if ((value === undefined || value === null || value === '') && key === 'agent') {
+        value = row?.name || row?.agentName || row?.agent_name;
+      }
+
+      if (value === undefined || value === null || value === '') {
+        return;
+      }
+
+      normalized[key] = value;
+    });
+    return normalized;
+  });
+}
+
 function fallbackSection(section) {
   switch (section) {
     case 'company':
       return {
-        columns: [
-          { key: 'metric', label: 'Metric' },
-          { key: 'value', label: 'Value' },
-          { key: 'change', label: 'Change vs. Prior' }
-        ],
-        rows: [
-          { metric: 'Total Leads', value: 0, change: '0%' },
-          { metric: 'Qualified Leads', value: 0, change: '0%' },
-          { metric: 'Conversion Rate', value: '0%', change: '0%' }
-        ]
+        columns: COMPANY_COLUMNS,
+        rows: [createBlankRow(COMPANY_COLUMNS)]
       };
     case 'opener':
       return {
-        columns: [
-          { key: 'agent', label: 'Opener' },
-          { key: 'transferred', label: 'Transferred' },
-          { key: 'appointments', label: 'Appointments' },
-          { key: 'conversion', label: 'Conversion %' }
-        ],
-        rows: []
+        columns: OPENER_COLUMNS,
+        rows: [createBlankRow(OPENER_COLUMNS)]
       };
     case 'intake':
       return {
-        columns: [
-          { key: 'agent', label: 'Intake' },
-          { key: 'enrolled', label: 'Enrolled' },
-          { key: 'pending', label: 'Pending' },
-          { key: 'conversion', label: 'Conversion %' }
-        ],
-        rows: []
+        columns: INTAKE_COLUMNS,
+        rows: [createBlankRow(INTAKE_COLUMNS)]
       };
     case 'comparison':
     default:
@@ -176,22 +250,6 @@ function DataTable({ title, description, dataset }) {
   );
 }
 
-function normalizeColumns(columns, fallback) {
-  if (!Array.isArray(columns) || !columns.length) {
-    return fallback;
-  }
-
-  return columns.map((column) => {
-    if (typeof column === 'string') {
-      const label = column
-        .replace(/_/g, ' ')
-        .replace(/\b\w/g, (char) => char.toUpperCase());
-      return { key: column, label };
-    }
-    return column;
-  });
-}
-
 export default function Reports() {
   const role = localStorage.getItem('role') || 'admin';
   const [searchParams, setSearchParams] = useSearchParams();
@@ -205,6 +263,7 @@ export default function Reports() {
     intake: fallbackSection('intake'),
     comparison: fallbackSection('comparison')
   });
+  const [syncStatus, setSyncStatus] = useState({ active: false, lastSuccess: null, error: false });
 
   const visibleSections = useMemo(() => getVisibleSections(role), [role]);
   const requestedSection = searchParams.get('section');
@@ -246,8 +305,8 @@ export default function Reports() {
             };
           } else {
             const fallback = fallbackSection(section);
-            const columns = normalizeColumns(data?.columns, fallback.columns);
-            const rows = Array.isArray(data?.rows) ? data.rows : fallback.rows;
+            const columns = SECTION_COLUMNS[section] || fallback.columns;
+            const rows = mapRowsToColumns(extractRows(data), columns);
             updated[section] = { columns, rows };
           }
         });
@@ -255,15 +314,43 @@ export default function Reports() {
       });
       setLastSynced(Date.now());
     } catch (err) {
-      setError('Unable to load reports at this time. Please try again later.');
+      setError('Reports are temporarily unavailable. Retrying shortly.');
     } finally {
       setLoading(false);
     }
   }, [visibleSections, activeFilter]);
 
+  const fetchSyncStatus = useCallback(async () => {
+    try {
+      const { data } = await api.get('/api/forthcrm/sync/status');
+      setSyncStatus((prev) => ({
+        active: Boolean(data?.active),
+        lastSuccess:
+          data?.last_successful_sync ||
+          data?.lastSuccess ||
+          data?.lastCompletedAt ||
+          data?.lastSyncAt ||
+          prev.lastSuccess,
+        error: false
+      }));
+    } catch (err) {
+      setSyncStatus((prev) => ({
+        active: false,
+        lastSuccess: prev.lastSuccess,
+        error: true
+      }));
+    }
+  }, []);
+
   useEffect(() => {
     fetchReports();
   }, [fetchReports]);
+
+  useEffect(() => {
+    fetchSyncStatus();
+    const syncInterval = setInterval(fetchSyncStatus, 60_000);
+    return () => clearInterval(syncInterval);
+  }, [fetchSyncStatus]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -274,6 +361,16 @@ export default function Reports() {
 
     return () => clearInterval(interval);
   }, [fetchReports]);
+
+  useEffect(() => {
+    if (!error) return;
+
+    const retry = setInterval(() => {
+      fetchReports();
+    }, 30_000);
+
+    return () => clearInterval(retry);
+  }, [error, fetchReports]);
 
   const handleFilterChange = (value) => {
     setActiveFilter(value);
@@ -288,13 +385,29 @@ export default function Reports() {
             Monitor productivity and conversion trends across the FlashDash teams.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="flex flex-col items-start gap-2 text-sm text-gray-500 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex items-center gap-2">
+            {syncStatus.active ? (
+              <>
+                <span className="inline-flex h-2 w-2 animate-spin rounded-full border-2 border-teal-400 border-t-transparent" />
+                <span>Syncing…</span>
+              </>
+            ) : (
+              <>
+                <span className="text-gray-400">Last successful sync:</span>
+                <span>{formatTimestamp(syncStatus.lastSuccess || lastSynced)}</span>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
             {loading && (
               <span className="inline-flex h-2 w-2 animate-spin rounded-full border-2 border-teal-400 border-t-transparent" />
             )}
-            <span>Last synced: {formatTimestamp(lastSynced)}</span>
+            <span>Last refreshed: {formatTimestamp(lastSynced)}</span>
           </div>
+          {syncStatus.error && (
+            <span className="text-xs text-amber-600">Sync status unavailable</span>
+          )}
           <button
             onClick={fetchReports}
             className="px-3 py-2 text-sm font-medium rounded-lg bg-teal-500 text-white hover:bg-teal-600"
@@ -321,7 +434,7 @@ export default function Reports() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
           {error}
         </div>
       )}

@@ -4,8 +4,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import FlashFinancialForm from './pages/FlashFinancialForm.jsx';
 import AdminPanel from './pages/AdminPanel.jsx';
 import Reports from './pages/Reports.jsx';
-import UserMapping from './pages/UserMapping.jsx';
-import AccessControl from './pages/AccessControl.jsx';
+import GlobalNotice from './components/GlobalNotice.jsx';
 
 const brand = import.meta.env.VITE_BRAND_COLOR || '#14b8a6';
 const logo = import.meta.env.VITE_LOGO_URL;
@@ -15,8 +14,6 @@ const roleNav = {
     { label: 'Dashboard', to: '/' },
     { label: 'Reports', to: '/reports' },
     { label: 'Lead Intake', to: '/flash-form' },
-    { label: 'User Mapping', to: '/admin/user-mapping' },
-    { label: 'Access Control', to: '/admin/access-control' },
     { label: 'Admin Panel', to: '/admin' }
   ],
   intake: [
@@ -117,6 +114,7 @@ function Layout({ children }) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
+      <GlobalNotice />
     </div>
   );
 }
@@ -161,26 +159,6 @@ export default function App() {
           <Protected allowedRoles={['admin']}>
             <Layout>
               <AdminPanel />
-            </Layout>
-          </Protected>
-        }
-      />
-      <Route
-        path="/admin/user-mapping"
-        element={
-          <Protected allowedRoles={['admin']}>
-            <Layout>
-              <UserMapping />
-            </Layout>
-          </Protected>
-        }
-      />
-      <Route
-        path="/admin/access-control"
-        element={
-          <Protected allowedRoles={['admin']}>
-            <Layout>
-              <AccessControl />
             </Layout>
           </Protected>
         }

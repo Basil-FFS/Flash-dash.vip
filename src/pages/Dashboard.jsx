@@ -57,6 +57,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [error, setError] = useState(null);
+  const [isFallback, setIsFallback] = useState(false);
   const role = localStorage.getItem('role') || 'admin';
   const agentName = localStorage.getItem('agentName') || 'Agent';
   const currentTime = new Date();
@@ -68,20 +69,29 @@ export default function Dashboard() {
     setError(null);
 
     try {
-      const { data } = await api.get('/api/dashboard/summary', { params: { role } });
+      const { data } = await api.get('/api/dashboard/metrics', { params: { role } });
+      const payload = data?.metrics || data || {};
       const fallback = fallbackSummary(role);
+      const fallbackFlag = Boolean(
+        data?.status === 'fallback' ||
+        data?.fallback === true ||
+        data?.meta?.source === 'cache'
+      );
+
       setSummary({
-        totalLeads: data?.totalLeads ?? fallback.totalLeads,
-        pendingLeads: data?.pendingLeads ?? fallback.pendingLeads,
-        conversionRate: data?.conversionRate ?? fallback.conversionRate,
-        weeklyPerformance: Array.isArray(data?.weeklyPerformance) && data.weeklyPerformance.length ? data.weeklyPerformance : fallback.weeklyPerformance,
-        dailyMetrics: Array.isArray(data?.dailyMetrics) && data.dailyMetrics.length ? data.dailyMetrics : fallback.dailyMetrics,
-        pendingLabel: data?.pendingLabel || (role === 'opener' ? 'Transferred Leads' : 'Enrolled Leads')
+        totalLeads: payload?.totalLeads ?? fallback.totalLeads,
+        pendingLeads: payload?.pendingLeads ?? fallback.pendingLeads,
+        conversionRate: payload?.conversionRate ?? fallback.conversionRate,
+        weeklyPerformance: Array.isArray(payload?.weeklyPerformance) && payload.weeklyPerformance.length ? payload.weeklyPerformance : fallback.weeklyPerformance,
+        dailyMetrics: Array.isArray(payload?.dailyMetrics) && payload.dailyMetrics.length ? payload.dailyMetrics : fallback.dailyMetrics,
+        pendingLabel: payload?.pendingLabel || (role === 'opener' ? 'Transferred Leads' : 'Enrolled Leads')
       });
       setLastUpdated(Date.now());
+      setIsFallback(fallbackFlag);
     } catch (err) {
-      setError('Unable to refresh dashboard metrics. Showing cached results.');
+      setError('Live metrics unavailable. Retrying in 30 seconds.');
       setSummary(fallbackSummary(role));
+      setIsFallback(true);
     } finally {
       setLoading(false);
     }
@@ -90,6 +100,16 @@ export default function Dashboard() {
   useEffect(() => {
     fetchSummary();
   }, [fetchSummary]);
+
+  useEffect(() => {
+    if (!error) return;
+
+    const timer = setInterval(() => {
+      fetchSummary();
+    }, 30_000);
+
+    return () => clearInterval(timer);
+  }, [error, fetchSummary]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -115,14 +135,14 @@ export default function Dashboard() {
           title: 'Manage Access',
           description: 'Configure roles and permissions',
           icon: '🔐',
-          link: '/admin/access-control',
+          link: '/admin?settings=access',
           color: 'from-purple-500 to-pink-500'
         },
         {
           title: 'User Mapping',
           description: 'Sync ForthCRM to FlashDash',
           icon: '👥',
-          link: '/admin/user-mapping',
+          link: '/admin?settings=mapping',
           color: 'from-teal-500 to-emerald-500'
         }
       ];
@@ -159,6 +179,7 @@ export default function Dashboard() {
   }, [role]);
 
   const filterLabel = summary.pendingLabel || (role === 'opener' ? 'Transferred Leads' : 'Enrolled Leads');
+  const showSkeleton = loading && !lastUpdated;
 
   return (
     <div className="space-y-8">
@@ -184,72 +205,92 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="card group hover:scale-105 transition-transform duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Leads (Assigned)</p>
-              <p className="text-3xl font-bold text-gray-900">{Number(summary.totalLeads).toLocaleString()}</p>
-            </div>
-            <div className="p-3 bg-teal-100 rounded-xl group-hover:bg-teal-200 transition-colors">
-              <span className="text-2xl">📈</span>
-            </div>
-          </div>
-          <div className="mt-4 text-sm text-gray-500">
-            Updated {lastUpdated ? new Date(lastUpdated).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '—'}
-          </div>
-        </div>
+        {showSkeleton
+          ? Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="card animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-3">
+                    <div className="h-3 w-24 rounded bg-gray-200" />
+                    <div className="h-6 w-20 rounded bg-gray-200" />
+                  </div>
+                  <div className="h-12 w-12 rounded-xl bg-gray-200" />
+                </div>
+                <div className="mt-4 h-3 w-32 rounded bg-gray-200" />
+              </div>
+            ))
+          : (
+            <>
+              <div className="card group hover:scale-105 transition-transform duration-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Total Leads (Assigned)</p>
+                    <p className="text-3xl font-bold text-gray-900">{Number(summary.totalLeads).toLocaleString()}</p>
+                  </div>
+                  <div className="p-3 bg-teal-100 rounded-xl group-hover:bg-teal-200 transition-colors">
+                    <span className="text-2xl">📈</span>
+                  </div>
+                </div>
+                <div className="mt-4 text-sm text-gray-500">
+                  Updated {lastUpdated ? new Date(lastUpdated).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '—'}
+                </div>
+              </div>
 
-        <div className="card group hover:scale-105 transition-transform duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">{filterLabel}</p>
-              <p className="text-3xl font-bold text-gray-900">{Number(summary.pendingLeads).toLocaleString()}</p>
-            </div>
-            <div className="p-3 bg-yellow-100 rounded-xl group-hover:bg-yellow-200 transition-colors">
-              <span className="text-2xl">⏳</span>
-            </div>
-          </div>
-          <div className="mt-4 text-sm text-gray-500">
-            {role === 'opener' ? 'Awaiting intake handoff' : 'Awaiting enrollment completion'}
-          </div>
-        </div>
+              <div className="card group hover:scale-105 transition-transform duration-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">{filterLabel}</p>
+                    <p className="text-3xl font-bold text-gray-900">{Number(summary.pendingLeads).toLocaleString()}</p>
+                  </div>
+                  <div className="p-3 bg-yellow-100 rounded-xl group-hover:bg-yellow-200 transition-colors">
+                    <span className="text-2xl">⏳</span>
+                  </div>
+                </div>
+                <div className="mt-4 text-sm text-gray-500">
+                  {role === 'opener' ? 'Awaiting intake handoff' : 'Awaiting enrollment completion'}
+                </div>
+              </div>
 
-        <div className="card group hover:scale-105 transition-transform duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Conversion Rate</p>
-              <p className="text-3xl font-bold text-gray-900">{summary.conversionRate}%</p>
-            </div>
-            <div className="p-3 bg-purple-100 rounded-xl group-hover:bg-purple-200 transition-colors">
-              <span className="text-2xl">🎯</span>
-            </div>
-          </div>
-          <div className="mt-4 text-sm text-gray-500">
-            Based on this week&apos;s closed opportunities.
-          </div>
-        </div>
+              <div className="card group hover:scale-105 transition-transform duration-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Conversion Rate</p>
+                    <p className="text-3xl font-bold text-gray-900">{summary.conversionRate}%</p>
+                  </div>
+                  <div className="p-3 bg-purple-100 rounded-xl group-hover:bg-purple-200 transition-colors">
+                    <span className="text-2xl">🎯</span>
+                  </div>
+                </div>
+                <div className="mt-4 text-sm text-gray-500">
+                  Based on this week&apos;s closed opportunities.
+                </div>
+              </div>
 
-        <div className="card group hover:scale-105 transition-transform duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Status</p>
-              <p className="text-3xl font-bold text-gray-900">{loading ? 'Syncing' : 'Live'}</p>
-            </div>
-            <div className="p-3 bg-sky-100 rounded-xl group-hover:bg-sky-200 transition-colors">
-              <span className="text-2xl">🕒</span>
-            </div>
-          </div>
-          <div className="mt-4 text-sm text-gray-500">
-            {withinBusinessHours() ? 'Auto-refreshing each hour.' : 'Auto-refresh paused until 10AM CST.'}
-          </div>
-        </div>
+              <div className="card group hover:scale-105 transition-transform duration-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Status</p>
+                    <p className="text-3xl font-bold text-gray-900">{loading ? 'Syncing' : isFallback ? 'Cached' : 'Live'}</p>
+                  </div>
+                  <div className="p-3 bg-sky-100 rounded-xl group-hover:bg-sky-200 transition-colors">
+                    <span className="text-2xl">🕒</span>
+                  </div>
+                </div>
+                <div className="mt-4 text-sm text-gray-500 flex items-center gap-2">
+                  {isFallback ? (
+                    <>
+                      <span className="inline-flex h-2 w-2 rounded-full bg-amber-400 animate-pulse" aria-hidden />
+                      <span title="Showing cached data">
+                        Showing cached data{error ? ' — retrying shortly' : ''}
+                      </span>
+                    </>
+                  ) : (
+                    <>{withinBusinessHours() ? 'Auto-refreshing each hour.' : 'Auto-refresh paused until 10AM CST.'}</>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
       </div>
-
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
 
       <div className="space-y-6">
         <h2 className="text-2xl font-bold text-gray-900">Quick Actions</h2>
