@@ -7,7 +7,7 @@ const api = axios.create({
     : 'http://localhost:8080'
 });
 
-const emitFallbackNotice = (message = 'Cached data displayed') => {
+export const emitFallbackNotice = (message = 'Cached data displayed') => {
   window.dispatchEvent(
     new CustomEvent('api:fallback', {
       detail: { message }
@@ -15,7 +15,7 @@ const emitFallbackNotice = (message = 'Cached data displayed') => {
   );
 };
 
-const emitRequestStatus = (type, message, config) => {
+export const emitRequestStatus = (type, message, config) => {
   if (!type) return;
 
   const detailMessage = message || (() => {
@@ -85,3 +85,23 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+export async function fetchFromEndpoints(endpoints, config = {}) {
+  const attempts = Array.isArray(endpoints) ? endpoints : [endpoints];
+  let lastError = null;
+
+  for (const endpoint of attempts) {
+    try {
+      const response = await api({ url: endpoint, method: 'get', ...config });
+      return response;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+
+  throw new Error('No endpoints provided');
+}

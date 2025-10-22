@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import api from '../api.js';
+import { fetchFromEndpoints } from '../api.js';
 
 const TABS = [
   { id: 'mapping', label: 'User Mapping' },
@@ -37,6 +37,49 @@ const DEFAULT_RULES = {
     accessControl: false
   }
 };
+
+const FORTH_USERS_ENDPOINTS = [
+  '/api/forthcrm/users',
+  '/api/forthcrm/users/list',
+  '/api/forthcrm/users/all'
+];
+
+const FLASH_USERS_ENDPOINTS = [
+  '/api/users',
+  '/api/admin/users',
+  '/api/flashdash/users',
+  '/api/local/users'
+];
+
+const MAPPING_ENDPOINTS = [
+  '/api/forthcrm/mapping/get',
+  '/api/forthcrm/mapping',
+  '/api/forthcrm/mappings',
+  '/api/forthcrm/user-mapping'
+];
+
+const MAPPING_SAVE_ENDPOINTS = [
+  '/api/forthcrm/mapping/set',
+  '/api/forthcrm/mapping/save',
+  '/api/forthcrm/mapping/update'
+];
+
+const MAPPING_DELETE_ENDPOINTS = [
+  '/api/forthcrm/mapping/delete',
+  '/api/forthcrm/mapping/remove'
+];
+
+const ACCESS_READ_ENDPOINTS = [
+  '/api/admin/access',
+  '/api/access',
+  '/api/admin/access/get'
+];
+
+const ACCESS_WRITE_ENDPOINTS = [
+  '/api/admin/access/update',
+  '/api/admin/access/save',
+  '/api/access/update'
+];
 
 function buildMappingRows(forthUsers, flashUsers, mappings) {
   const flashLookup = new Map(flashUsers.map((user) => [user.id, user.name]));
@@ -109,9 +152,9 @@ export default function AdminSettingsModal({ open, onClose, initialTab = 'mappin
 
       try {
         const [forthRes, flashRes, mappingRes] = await Promise.all([
-          api.get('/api/forthcrm/users'),
-          api.get('/api/users'),
-          api.get('/api/forthcrm/mapping/get').catch(() => api.get('/api/forthcrm/mapping'))
+          fetchFromEndpoints(FORTH_USERS_ENDPOINTS, { showStatus: false }),
+          fetchFromEndpoints(FLASH_USERS_ENDPOINTS, { showStatus: false }),
+          fetchFromEndpoints(MAPPING_ENDPOINTS, { showStatus: false })
         ]);
 
         const forthRecords = (forthRes.data || []).map((user) => ({
@@ -171,7 +214,7 @@ export default function AdminSettingsModal({ open, onClose, initialTab = 'mappin
       setAccessMessage('');
 
       try {
-        const { data } = await api.get('/api/admin/access');
+        const { data } = await fetchFromEndpoints(ACCESS_READ_ENDPOINTS, { showStatus: false });
         if (data && typeof data === 'object') {
           setAccessRules((prev) => ({
             ...prev,
@@ -210,9 +253,12 @@ export default function AdminSettingsModal({ open, onClose, initialTab = 'mappin
     setMappingInfo('');
 
     try {
-      await api.post('/api/forthcrm/mapping/set', {
-        forthUserId: selectedForth,
-        flashUserId: selectedFlash
+      await fetchFromEndpoints(MAPPING_SAVE_ENDPOINTS, {
+        method: 'post',
+        data: {
+          forthUserId: selectedForth,
+          flashUserId: selectedFlash
+        }
       });
 
       const flashName = flashUsers.find((user) => user.id === selectedFlash)?.name || 'FlashDash User';
@@ -249,7 +295,10 @@ export default function AdminSettingsModal({ open, onClose, initialTab = 'mappin
     setMappingInfo('');
 
     try {
-      await api.post('/api/forthcrm/mapping/delete', { forthUserId: forthId });
+      await fetchFromEndpoints(MAPPING_DELETE_ENDPOINTS, {
+        method: 'post',
+        data: { forthUserId: forthId }
+      });
 
       setMappingRows((prev) => {
         const row = prev.find((item) => item.id === forthId);
@@ -314,7 +363,10 @@ export default function AdminSettingsModal({ open, onClose, initialTab = 'mappin
     setAccessMessage('');
 
     try {
-      await api.post('/api/admin/access/update', accessRules);
+      await fetchFromEndpoints(ACCESS_WRITE_ENDPOINTS, {
+        method: 'post',
+        data: accessRules
+      });
       setAccessMessage('Access policies updated.');
     } catch (err) {
       setAccessError('Unable to persist access changes. Please retry.');

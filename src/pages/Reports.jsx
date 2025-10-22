@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import api from '../api.js';
+import { fetchFromEndpoints } from '../api.js';
 import { SimpleBarChart, SimpleLineChart } from '../components/ChartPrimitives.jsx';
 
 const FILTERS = [
@@ -9,6 +9,13 @@ const FILTERS = [
   { label: 'This Week', value: 'this_week' },
   { label: 'This Month', value: 'this_month' }
 ];
+
+const FILTER_PERIOD_MAP = {
+  today: 'today',
+  yesterday: 'yesterday',
+  this_week: 'week',
+  this_month: 'month'
+};
 
 const SECTION_LABELS = {
   company: 'Company Metrics',
