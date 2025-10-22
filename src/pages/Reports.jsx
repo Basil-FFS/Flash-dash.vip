@@ -68,29 +68,6 @@ const SECTION_COLUMNS = {
   intake: INTAKE_COLUMNS
 };
 
-const REPORT_ENDPOINTS = {
-  company: [
-    '/api/reports/company',
-    '/api/reports/company-metrics',
-    '/api/reports/company_metrics'
-  ],
-  opener: [
-    '/api/reports/opener',
-    '/api/reports/opener-metrics',
-    '/api/reports/opener_metrics'
-  ],
-  intake: [
-    '/api/reports/intake',
-    '/api/reports/intake-metrics',
-    '/api/reports/intake_metrics'
-  ],
-  comparison: [
-    '/api/reports/comparison',
-    '/api/reports/comparison-charts',
-    '/api/reports/charts'
-  ]
-};
-
 function isWithinBusinessHours(date = new Date()) {
   const centralDate = new Date(date.toLocaleString('en-US', { timeZone: 'America/Chicago' }));
   const hour = centralDate.getHours();
@@ -323,29 +300,15 @@ export default function Reports() {
     setError(null);
 
     const sectionsToFetch = visibleSections;
-    const period = FILTER_PERIOD_MAP[activeFilter] || activeFilter;
-    const params = {
-      range: activeFilter,
-      period,
-      timeframe: period,
-      window: period
-    };
 
     try {
       const responses = await Promise.all(
-        sectionsToFetch.map(async (section) => {
-          const endpoints = REPORT_ENDPOINTS[section] || [`/api/reports/${section}`];
-
-          try {
-            const res = await fetchFromEndpoints(endpoints, {
-              params,
-              showStatus: false
-            });
-            return { section, data: res.data };
-          } catch (err) {
-            return { section, data: fallbackSection(section) };
-          }
-        })
+        sectionsToFetch.map((section) =>
+          api
+            .get(`/api/reports/${section}`, { params: { range: activeFilter } })
+            .then((res) => ({ section, data: res.data }))
+            .catch(() => ({ section, data: fallbackSection(section) }))
+        )
       );
 
       setDatasets((prev) => {
@@ -376,10 +339,7 @@ export default function Reports() {
 
   const fetchSyncStatus = useCallback(async () => {
     try {
-      const { data } = await fetchFromEndpoints(
-        ['/api/forthcrm/sync/status', '/api/sync/status', '/api/forthcrm/sync'],
-        { showStatus: false }
-      );
+      const { data } = await api.get('/api/forthcrm/sync/status');
       setSyncStatus((prev) => ({
         active: Boolean(data?.active),
         lastSuccess:
